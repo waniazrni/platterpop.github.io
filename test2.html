@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Scroll Portfolio</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .workspace {
+            position: absolute;
+            display: flex;
+            flex-wrap: wrap;
+            width: 3000px;
+            height: 3000px;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+        }
+
+        .project {
+            width: 300px;
+            height: 300px;
+            margin: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .project img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .project h3 {
+            margin: 10px 0;
+            font-size: 20px;
+        }
+
+        .project p {
+            font-size: 16px;
+            color: #555;
+            margin: 0 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="workspace" id="workspace"></div>
+
+    <script>
+        const workspace = document.getElementById('workspace');
+        const tileSize = 320; // Each project tile size (300px + margin)
+        const numTiles = 100; // Total number of tiles
+
+        // Populate the workspace with tiles
+        for (let i = 0; i < numTiles; i++) {
+            const project = document.createElement('div');
+            project.className = 'project';
+            project.innerHTML = `
+                <img src="https://via.placeholder.com/300" alt="Project ${i + 1}">
+                <h3>Project ${i + 1}</h3>
+                <p>Description for Project ${i + 1}</p>
+            `;
+            workspace.appendChild(project);
+        }
+
+        let offsetX = 0;
+        let offsetY = 0;
+        const speed = 3; // Speed multiplier for movement (adjusted for smoother effect)
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let velocityX = 0;
+        let velocityY = 0;
+        const friction = 0.97; // Reduced friction for a smoother effect
+
+        // Update workspace position and loop tiles
+        function updateWorkspacePosition() {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const workspaceWidth = workspace.offsetWidth;
+            const workspaceHeight = workspace.offsetHeight;
+
+            // Loop horizontally
+            if (offsetX < -workspaceWidth / 2) offsetX += workspaceWidth;
+            if (offsetX > workspaceWidth / 2) offsetX -= workspaceWidth;
+
+            // Loop vertically
+            if (offsetY < -workspaceHeight / 2) offsetY += workspaceHeight;
+            if (offsetY > workspaceHeight / 2) offsetY -= workspaceHeight;
+
+            workspace.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+        }
+
+        // Handle mouse movement
+        document.addEventListener('mousemove', (event) => {
+            if (!isDragging) {
+                const { innerWidth, innerHeight } = window;
+                const mouseX = (event.clientX / innerWidth - 0.5) * 2;
+                const mouseY = (event.clientY / innerHeight - 0.5) * 2;
+
+                velocityX -= mouseX * speed;
+                velocityY -= mouseY * speed;
+            }
+        });
+
+        // Handle mouse drag
+        document.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+            velocityX = 0;
+            velocityY = 0;
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                const deltaX = event.clientX - lastMouseX;
+                const deltaY = event.clientY - lastMouseY;
+
+                offsetX += deltaX;
+                offsetY += deltaY;
+
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+
+                updateWorkspacePosition();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Handle mouse wheel scrolling
+        document.addEventListener('wheel', (event) => {
+            const delta = event.deltaY;
+            velocityX += delta * 0.1;
+            velocityY += delta * 0.1;
+        });
+
+        // Animation loop with friction
+        function animate() {
+            if (!isDragging) {
+                offsetX += velocityX;
+                offsetY += velocityY;
+
+                velocityX *= friction;
+                velocityY *= friction;
+
+                // Stop small movements
+                if (Math.abs(velocityX) < 0.01) velocityX = 0;
+                if (Math.abs(velocityY) < 0.01) velocityY = 0;
+            }
+
+            updateWorkspacePosition();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
